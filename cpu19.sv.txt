@@ -1,0 +1,56 @@
+// Code your design here
+// 19-bit Simple CPU Architecture
+module cpu19(input clk, input reset);
+
+    reg [18:0] pc;                    // 19-bit Program Counter
+    reg [18:0] instr_mem [0:31];      // Instruction Memory
+    reg [18:0] data_mem [0:31];       // Data Memory
+    reg [18:0] regfile [0:7];         // 8 Registers
+    reg [18:0] instr;                 // Current instruction
+
+    reg [18:0] stack [0:7];           // Simple stack
+    reg [2:0] sp;                     // Stack pointer
+
+    // Opcodes
+    localparam ADD=5'b00000, SUB=5'b00001, MUL=5'b00010, DIV=5'b00011,
+               INC=5'b00100, DEC=5'b00101, AND=5'b00110, OR =5'b00111,
+               XOR=5'b01000, NOT=5'b01001, JMP=5'b01010, BEQ=5'b01011,
+               BNE=5'b01100, CALL=5'b01101, RET=5'b01110, LD =5'b01111,
+               ST =5'b10000, FFT=5'b10001, ENC=5'b10010, DEC2=5'b10011;
+
+    wire [4:0] opcode = instr[18:14];
+    wire [2:0] rd     = instr[13:11];
+    wire [2:0] rs1    = instr[10:8];
+    wire [2:0] rs2    = instr[7:5];
+    wire [4:0] addr   = instr[4:0];
+
+    always @(posedge clk or posedge reset) begin
+        if(reset) begin
+            pc <= 0;
+            sp <= 7;
+        end else begin
+            instr <= instr_mem[pc];
+            pc <= pc + 1;
+            case(opcode)
+                ADD: regfile[rd] <= regfile[rs1] + regfile[rs2];
+                SUB: regfile[rd] <= regfile[rs1] - regfile[rs2];
+                MUL: regfile[rd] <= regfile[rs1] * regfile[rs2];
+                DIV: regfile[rd] <= regfile[rs1] / regfile[rs2];
+                INC: regfile[rd] <= regfile[rd] + 1;
+                DEC: regfile[rd] <= regfile[rd] - 1;
+                AND: regfile[rd] <= regfile[rs1] & regfile[rs2];
+                OR : regfile[rd] <= regfile[rs1] | regfile[rs2];
+                XOR: regfile[rd] <= regfile[rs1] ^ regfile[rs2];
+                NOT: regfile[rd] <= ~regfile[rs1];
+                JMP: pc <= addr;
+                BEQ: if(regfile[rd]==regfile[rs1]) pc <= addr;
+                BNE: if(regfile[rd]!=regfile[rs1]) pc <= addr;
+                CALL: begin stack[sp] <= pc; sp <= sp-1; pc <= addr; end
+                RET : begin sp <= sp+1; pc <= stack[sp]; end
+                LD  : regfile[rd] <= data_mem[addr];
+                ST  : data_mem[addr] <= regfile[rd];
+                FFT,ENC,DEC2: regfile[rd] <= regfile[rs1]; // stub
+            endcase
+        end
+    end
+endmodule

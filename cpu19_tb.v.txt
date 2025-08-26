@@ -1,0 +1,33 @@
+// Code your testbench here
+// or browse Examples
+module tb_cpu19;
+    reg clk, reset;
+    cpu19 uut(clk, reset);
+
+    initial begin
+        clk = 0; forever #5 clk = ~clk; // 10 time-unit clock
+    end
+
+    initial begin
+        reset = 1; #10 reset = 0;
+
+        // Program: r1 = 5; r2 = 3; ADD r3 = r1+r2
+        uut.regfile[1] = 19'd5;
+        uut.regfile[2] = 19'd3;
+
+        // Encoding: opcode(5) rd(3) rs1(3) rs2(3) addr(5)
+        uut.instr_mem[0] = {5'b00000,3'd3,3'd1,3'd2,5'd0}; // ADD r3,r1,r2
+        uut.instr_mem[1] = {5'b00100,3'd3,3'd0,3'd0,5'd0}; // INC r3
+        uut.instr_mem[2] = {5'b00101,3'd1,3'd0,3'd0,5'd0}; // DEC r1
+        uut.instr_mem[3] = {5'b01001,3'd4,3'd3,3'd0,5'd0}; // NOT r4,r3
+        uut.instr_mem[4] = {5'b01010,3'd0,3'd0,3'd0,5'd6}; // JMP addr=6
+        uut.instr_mem[5] = {5'b00001,3'd5,3'd1,3'd2,5'd0}; // (skipped) SUB
+        uut.instr_mem[6] = {5'b01111,3'd3,3'd0,3'd0,5'd10}; // LD r3,mem[10]
+        uut.data_mem[10] = 19'd42; // preload memory
+
+        #100 $display("R1=%d R2=%d R3=%d R4=%d", uut.regfile[1], uut.regfile[2], uut.regfile[3], uut.regfile[4]);
+        $finish;
+    end
+endmodule
+
+
